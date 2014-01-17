@@ -13,6 +13,8 @@ helpers      = require './helpers'
 optparse     = require './optparse'
 CoffeeScript = require './coffee-script'
 
+existsSync   = fs.existsSync or path.existsSync
+
 # Keep track of the list of defined tasks, the accepted options, and so on.
 tasks     = {}
 options   = {}
@@ -35,9 +37,9 @@ helpers.extend global,
     switches.push [letter, flag, description]
 
   # Invoke another task in the current Cakefile.
-  invoke: (name) ->
+  invoke: (name, cb) ->
     missingTask name unless tasks[name]
-    tasks[name].action options
+    tasks[name].action options, cb or (->)
 
 # Run `cake`. Executes all of the tasks you pass, in order. Note that Node's
 # asynchrony may cause tasks to execute in a different order than you'd expect.
@@ -79,7 +81,7 @@ missingTask = (task) -> fatalError "No such task: #{task}"
 # When `cake` is invoked, search in the current and all parent directories
 # to find the relevant Cakefile.
 cakefileDirectory = (dir) ->
-  return dir if fs.existsSync path.join dir, 'Cakefile'
+  return dir if existsSync path.join dir, 'Cakefile'
   parent = path.normalize path.join dir, '..'
   return cakefileDirectory parent unless parent is dir
   throw new Error "Cakefile not found in #{process.cwd()}"
